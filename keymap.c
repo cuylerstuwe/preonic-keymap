@@ -1,20 +1,15 @@
-/* Copyright 2015-2017 Jack Humbert
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+/**
+ * Cuyler's (salembeats)
+ * Preonic Layout (keymap.c)
+ * 
+*/
 
 #include QMK_KEYBOARD_H
+#define MIDI_ADVANCED
+#include "midi.h"
+#include "process_midi.h"
+#include <LUFA/Drivers/USB/USB.h>
+#include "qmk_midi.h"
 
 enum preonic_layers {
 	_QWERTY,
@@ -29,10 +24,27 @@ enum preonic_layers {
 #define _______ KC_TRNS
 #define ___x___ KC_NO
 
+#define DESKMAN LWIN(KC_TAB)
+#define LEFTDSK LCTL(LWIN(KC_LEFT))
+#define RGHTDSK LCTL(LWIN(KC_RIGHT))
+
+#define WINLEFT LWIN(KC_LEFT)
+#define WINUP   LWIN(KC_UP)
+#define WINDOWN LWIN(KC_DOWN)
+#define WINRGHT LWIN(KC_RIGHT)
+
 enum preonic_keycodes {
 	QWERTY = SAFE_RANGE,
 	LOWER,
-	RAISE
+	RAISE,
+	MCC_50,
+	MCC_51,
+	MCC_52,
+	MCC_53,
+	MCC_54,
+	MCC_55,
+	MCC_56,
+	MCC_57
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -88,7 +100,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
 	 *  │     │  1  │  2  │  3  │  4  │  5  │  6  │  7  │  8  │  9  │  0  │     │
 	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
-	 *  │     │  ?  │  !  │  &  │  |  │  =  │  =  │  *  │  /  │  +  │  -  │     │
+	 *  │     │  *  │  -  │  ?  │  &  │  =  │  =  │  |  │  !  │  +  │  /  │     │
 	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
 	 *  │     │     │  ~  │     │     │     │     │  ^  │  %  │     │     │     │
 	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
@@ -125,34 +137,34 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______, _______, _______, _______, ___x___, ___x___, ___x___, ___x___, _______, _______, _______,                _______  \
 	),
 
-/* Settings, standard backspace/delete block. (LOWER + RAISE)
+/* Settings, standard backspace/delete block, MIDI CCs 50-57 as 'tap buttons'. (LOWER + RAISE)
 
  * ,-----------------------------------------------------------------------------------.
- * |Reset | -Aud | +Aud |      |      |      |      |      |      |      |      | Del  |
+ * |Reset | -Aud | +Aud |Voice-|Voice+|      |      |      |      |      |      | Del  |
  * |------+------+------+------+------+------+------+------+------+------+------+------|
  * |      | +Mus | -Mus |      |      |      |      |      |      |      |      | Bksp |
  * |------+------+------+------+------+-------------+------+------+------+------+------|
- * |      |+MIDI |-MIDI |      |      |      |      |      |      |      |      |      |
+ * |      |+MIDI |-MIDI |      | CC50 |      |      | CC51 |      |      |      |      |
  * |------+------+------+------+------+------|------+------+------+------+------+------|
- * |      |Voice-|Voice+|      |      |      |      |      |      |      |      |      |
+ * |      | CC50 | CC51 | CC52 | CC53 |      |      | CC54 | CC55 | CC56 | CC57 |      |
  * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      |      |      |      |             |      |      |      |      |      |
+ * |      |      |      |      | >><< |             | >><< |      |      |      |      |
  * `-----------------------------------------------------------------------------------'
  */
 [_ADJUST] = LAYOUT_preonic_grid( \
-	RESET,   AU_ON,   AU_OFF,  _______, _______, _______, _______, _______, _______, _______, _______, KC_DEL, \
+	RESET,   AU_ON,   AU_OFF,  MUV_DE , MUV_IN,  _______, _______, _______, _______, _______, _______, KC_DEL, \
 	_______, MU_ON,   MU_OFF,  _______, _______, _______, _______, _______, _______, _______, _______, KC_BSPC,  \
-	_______, MI_ON,   MI_OFF,  _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-	_______, MUV_DE,  MUV_IN,  _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+	_______, MI_ON,   MI_OFF,  _______, MCC_50,  _______, _______, MCC_51,  _______, _______, _______, _______, \
+	_______, MCC_50,  MCC_51,  MCC_52,  MCC_53,  _______, _______, MCC_54,  MCC_55,  MCC_56,  MCC_57,  _______, \
 	_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
 
-/* Numpad and media control.
+/* Numpad, media control, desktop and window control.
 
  * ,-----------------------------------------------------------------------------------.
- * |      |      |      |      |      |      |      | Num  |  /   |  *   |  -   | Vol+ |
+ * |      |<- Win|v Win |^ Win | Win->|      |      | Num  |  /   |  *   |  -   | Vol+ |
  * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      |      |      |      |      |      |  7   |  8   |  9   |  +   | Vol- |
+ * | >><< |<-Dsk |DskMan| Dsk->|      |      |      |  7   |  8   |  9   |  +   | Vol- |
  * |------+------+------+------+------+-------------+------+------+------+------+------|
  * |      |      |      |      |      |      |      |  4   |  5   |  6   |  +   | Mute |
  * |------+------+------+------+------+------|------+------+------+------+------+------|
@@ -162,8 +174,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * `-----------------------------------------------------------------------------------'
  */
 [_NUMPAD] = LAYOUT_preonic_grid( \
-	___x___,             ___x___, ___x___, ___x___, ___x___, ___x___, ___x___, KC_NLCK, KC_PSLS, KC_PAST, KC_PMNS, KC_VOLU, \
-	LT(_NUMPAD, KC_TAB), ___x___, ___x___, ___x___, ___x___, ___x___, ___x___, KC_P7,   KC_P8,   KC_P9,   KC_PPLS, KC_VOLD,  \
+	___x___,             WINLEFT, WINDOWN, WINUP,   WINRGHT, ___x___, ___x___, KC_NLCK, KC_PSLS, KC_PAST, KC_PMNS, KC_VOLU, \
+	LT(_NUMPAD, KC_TAB), LEFTDSK, DESKMAN, RGHTDSK, ___x___, ___x___, ___x___, KC_P7,   KC_P8,   KC_P9,   KC_PPLS, KC_VOLD,  \
 	___x___,             ___x___, ___x___, ___x___, ___x___, ___x___, ___x___, KC_P5,   KC_P6,   KC_P7,   KC_PPLS, KC_MUTE, \
 	___x___,             ___x___, ___x___, ___x___, ___x___, ___x___, ___x___, KC_P1,   KC_P2,   KC_P3,   KC_PENT, KC_MPRV, \
 	___x___,             ___x___, ___x___, ___x___, ___x___, KC_MPLY, KC_MSTP, KC_P0,   KC_P0,   KC_PDOT, KC_PENT, KC_MNXT  \
@@ -172,8 +184,51 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 };
 
+void cc_button_press(uint8_t cc) {
+	midi_send_cc(&midi_device, 0, cc, 127);
+	midi_send_cc(&midi_device, 0, cc, 0);
+}
+
+void send_cc_if_pressed(uint8_t cc, keyrecord_t *record) {
+	if(record->event.pressed) {
+		cc_button_press(cc);
+	}
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 	switch (keycode) {
+				case MCC_50:
+					send_cc_if_pressed(50, record);
+					return false;
+					break;
+				case MCC_51:
+					send_cc_if_pressed(51, record);
+					return false;
+					break;
+				case MCC_52:
+					send_cc_if_pressed(52, record);
+					return false;
+					break;
+				case MCC_53:
+					send_cc_if_pressed(53, record);
+					return false;
+					break;
+				case MCC_54:
+					send_cc_if_pressed(54, record);
+					return false;
+					break;
+				case MCC_55:
+					send_cc_if_pressed(55, record);
+					return false;
+					break;
+				case MCC_56:
+					send_cc_if_pressed(56, record);
+					return false;
+					break;
+				case MCC_57:
+					send_cc_if_pressed(57, record);
+					return false;
+					break;
 				case QWERTY:
 					if (record->event.pressed) {
 						set_single_persistent_default_layer(_QWERTY);
