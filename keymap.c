@@ -11,10 +11,16 @@
 #include <LUFA/Drivers/USB/USB.h>
 #include "qmk_midi.h"
 
+#ifdef AUDIO_ENABLE
+	#include "song_list.h"
+#endif
+
 enum preonic_layers {
 	_QWERTY,
 	_LOWER,
 	_RAISE,
+	_SUPER_RAISE,
+	_SUPER_LOWER,
 	NAV_LAYER,
 	_ADJUST,
 	_NUMPAD
@@ -39,7 +45,9 @@ enum preonic_layers {
 enum preonic_keycodes {
 	QWERTY = SAFE_RANGE,
 	LOWER,
+	LOWER2,
 	RAISE,
+	RAISE2,
 	MCC_50,
 	MCC_51,
 	MCC_52,
@@ -47,7 +55,23 @@ enum preonic_keycodes {
 	MCC_54,
 	MCC_55,
 	MCC_56,
-	MCC_57
+	MCC_57,
+	MACRO_OPEN_CLOSE_CURLY,
+	MACRO_OPEN_CLOSE_SQUARE,
+	MACRO_DOUBLE_COLON,
+	MACRO_DOUBLE_AND,
+	MACRO_DOUBLE_OR,
+	MACRO_SKINNY_ARROW,
+	MACRO_THICK_ARROW,
+	MACRO_DOUBLE_UNEQUAL,
+	MACRO_DOUBLE_EQUAL,
+	MACRO_TRIPLE_UNEQUAL,
+	MACRO_TRIPLE_EQUAL,
+	MACRO_OPENING_MULTILINE_COMMENT,
+	MACRO_CLOSING_MULTILINE_COMMENT,
+	MACRO_C_STYLE_COMMENT,
+	MACRO_LESS_OR_EQUAL,
+	MACRO_GREATER_OR_EQUAL
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -63,7 +87,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
 	 *  │  ⇧  │  Z  │  X  │  C  │  V  │  B  │  N  │  M  │ ,<  │ .>  │ /?  │  ⇧  │
 	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
-	 *  │     │     │ Win │ Alt │  ↓  │ Spc | Spc |  ↑  │ Alt │ Win │     │     │
+	 *  │Ctrl │ Win │ Alt │ ↓↓↓ │  ↓  │ Spc | Spc |  ↑  │ ↑↑↑ │ Alt │ Win │ Ctrl│
 	 *  └-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┘
 	 */
 [_QWERTY] = LAYOUT_preonic_grid( \
@@ -71,7 +95,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	LT(_NUMPAD, KC_TAB), KC_Q,      KC_W,    KC_E,    KC_R,  KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,                   KC_BSLS,       \
 	CTL_T(KC_ESC),       KC_A,      KC_S,    KC_D,    KC_F,  KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    LT(NAV_LAYER, KC_SCLN), CTL_T(KC_ENT), \
 	KC_LSFT,             KC_Z,      KC_X,    KC_C,    KC_V,  KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,                KC_RSFT,       \
-	_______,             _______,   KC_LWIN, KC_LALT, LOWER, KC_SPC,  KC_SPC, RAISE,   KC_RALT, KC_RWIN, _______,                _______        \
+	KC_LCTRL,            KC_LWIN,   KC_LALT, LOWER2,  LOWER, KC_SPC,  KC_SPC,  RAISE,   RAISE2,  KC_RALT, KC_RWIN,                KC_RCTRL       \
 ),
 
 /* Enclosing pairs, backspace, functions. (LOWER)
@@ -96,8 +120,46 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______, _______, _______, _______, _______, KC_SPC,  KC_BSPC, _______, _______, _______, _______, _______  \
 	),
 
+/* Common prgramming keywords. (SUPER LOWER)
+const * 
+var * 
+let *
+function *
+class *
+string
+if *
+else *
+while *
+for *
+return *
+enum
+true *
+false *
+null *
+undefined *
 
-/* Enclosing pairs, backspace, functions. (LOWER)
+	 *  ┌-----+-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┐
+	 *  │     │     |     │     │     │     │     │     │     │     │     │     │
+	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
+	 *  │     │     │     │     │     │     │     │     │     │     │     │     │
+	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
+	 *  │     │     │     │     │     │     │     │     │     │     │     │     │
+	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
+	 *  │     │     │     │     │     │     │     │     │     │     │     │     │
+	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
+	 *  │     │     │     │>> <<│     │     |     │     │     │     │     │     │
+	 *  └-----+-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┘
+	 */
+[_SUPER_LOWER] = LAYOUT_preonic_grid( \
+		_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+		_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+		_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+		_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+		_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______  \
+	),
+
+
+/* Enclosing pairs, backspace, functions. (RAISE)
 
 	 *  ┌-----+-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┐
 	 *  │ F13 │ F14 | F15 │ F16 │ F17 │ F18 │ F19 │ F20 │ F21 │ F22 │ F23 │ F24 │
@@ -117,6 +179,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______, KC_LT,   KC_LCBR, KC_LPRN, KC_LBRC, KC_EQL,  KC_EQL,  KC_RBRC, KC_RPRN, KC_RCBR, KC_GT,   KC_QUOT, \
 		_______, KC_MINS, KC_PLUS, KC_SLSH, KC_ASTR, KC_BSLS, KC_BSLS, KC_ASTR, KC_SLSH, KC_PLUS, KC_MINS, _______, \
 		_______, _______, _______, _______, _______, KC_SPC,  KC_BSPC, _______, _______, _______, _______, _______  \
+	),
+
+/* Common programming symbols. (SUPER RAISE)
+
+	 *  ┌-----+-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┬-----┐
+	 *  │     │     |  {} │     │  [] │  :: │ ::  │ []  │     │ {}  │     │     │
+	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
+	 *  │     │  && │  || │  -> │  => │ !=  │ !== │ =>  │ ->  │ ||  │ &&  │     │
+	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
+	 *  │     │open/│  // │  <= │  >= │ ==  │ === │ >=  │ <=  │ //  │clos/│     │ 
+	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
+	 *  │     │     │     │     │     │     │     │     │     │     │     │     │
+	 *  ├-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┼-----┤
+	 *  │     │     │     │     │     │     |     │     │>> <<│     │     │     │
+	 *  └-----+-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┴-----┘
+	 */
+[_SUPER_RAISE] = LAYOUT_preonic_grid( \
+		_______, _______,                         MACRO_OPEN_CLOSE_CURLY,    _______,             MACRO_OPEN_CLOSE_SQUARE, MACRO_DOUBLE_COLON,   MACRO_DOUBLE_COLON,   MACRO_OPEN_CLOSE_SQUARE, _______,             MACRO_OPEN_CLOSE_CURLY, _______,                         _______, \
+		_______, MACRO_DOUBLE_AND,                MACRO_DOUBLE_OR,           MACRO_SKINNY_ARROW,  MACRO_THICK_ARROW,       MACRO_DOUBLE_UNEQUAL, MACRO_TRIPLE_UNEQUAL, MACRO_THICK_ARROW,       MACRO_SKINNY_ARROW,  MACRO_DOUBLE_OR,        MACRO_DOUBLE_AND,                _______, \
+		_______, MACRO_OPENING_MULTILINE_COMMENT, MACRO_C_STYLE_COMMENT,     MACRO_LESS_OR_EQUAL, MACRO_GREATER_OR_EQUAL,  MACRO_DOUBLE_EQUAL,   MACRO_TRIPLE_EQUAL,   MACRO_GREATER_OR_EQUAL,  MACRO_LESS_OR_EQUAL, MACRO_C_STYLE_COMMENT,  MACRO_CLOSING_MULTILINE_COMMENT, _______, \
+		_______, _______,                         _______,                   _______,             _______,                 _______,              _______,              _______,                 _______,             _______,                _______,                         _______, \
+		_______, _______,                         _______,                   _______,             _______,                 _______,              _______,              _______,                 _______,             _______,                _______,                         _______  \
 	),
 
 /* Navigation. (;)
@@ -141,14 +225,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______, _______, _______, _______, ___x___, ___x___, ___x___, ___x___, _______, _______, _______,                _______  \
 	),
 
-/* Settings, standard backspace/delete block, MIDI CCs 50-57 as 'tap buttons'. (LOWER + RAISE)
+/* Reset, standard backspace/delete block, MIDI CCs 50-57 as 'tap buttons'. (LOWER + RAISE)
 
  * ,-----------------------------------------------------------------------------------.
- * |Reset | -Aud | +Aud |Voice-|Voice+|      |      |      |      |      |      | Del  |
+ * |Reset |      |      |      |      |      |      |      |      |      |      | Del  |
  * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      | +Mus | -Mus |      |      |      |      |      |      |      |      | Bksp |
+ * |      |      |      |      |      |      |      |      |      |      |      | Bksp |
  * |------+------+------+------+------+-------------+------+------+------+------+------|
- * |      |+MIDI |-MIDI |      | CC50 |      |      | CC51 |      |      |      |      |
+ * |      |      |      |      | CC50 |      |      | CC51 |      |      |      |      |
  * |------+------+------+------+------+------|------+------+------+------+------+------|
  * |      | CC50 | CC51 | CC52 | CC53 |      |      | CC54 | CC55 | CC56 | CC57 |      |
  * |------+------+------+------+------+------+------+------+------+------+------+------|
@@ -156,9 +240,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * `-----------------------------------------------------------------------------------'
  */
 [_ADJUST] = LAYOUT_preonic_grid( \
-	RESET,   AU_ON,   AU_OFF,  MUV_DE , MUV_IN,  _______, _______, _______, _______, _______, _______, KC_DEL, \
-	_______, MU_ON,   MU_OFF,  _______, _______, _______, _______, _______, _______, _______, _______, KC_BSPC,  \
-	_______, MI_ON,   MI_OFF,  _______, MCC_50,  _______, _______, MCC_51,  _______, _______, _______, _______, \
+	RESET,   _______, _______, _______, _______,  _______, _______, _______, _______, _______, _______, KC_DEL, \
+	_______, _______, _______,  _______, _______, _______, _______, _______, _______, _______, _______, KC_BSPC,  \
+	_______, _______, _______,  _______, MCC_50,  _______, _______, MCC_51,  _______, _______, _______, _______, \
 	_______, MCC_50,  MCC_51,  MCC_52,  MCC_53,  _______, _______, MCC_54,  MCC_55,  MCC_56,  MCC_57,  _______, \
 	_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
@@ -187,6 +271,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 };
+
+#ifdef AUDIO_ENABLE
+
+	float my_song[][2] = SONG(ZELDA_PUZZLE);
+	float my_song_2[][2] = SONG(ZELDA_TREASURE);
+
+#endif
 
 void cc_button_press(uint8_t cc) {
 	midi_send_cc(&midi_device, 0, cc, 127);
@@ -259,6 +350,92 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 					}
 					return false;
 					break;
+				case RAISE2:
+					if (record->event.pressed) {
+						#ifdef AUDIO_ENABLE
+							PLAY_SONG(my_song);
+						#endif
+						layer_on(_SUPER_RAISE);
+					} else {
+						layer_off(_SUPER_RAISE);
+					}
+					return false;
+					break;
+				case LOWER2:
+					if (record->event.pressed) {
+						#ifdef AUDIO_ENABLE
+							PLAY_SONG(my_song_2);
+						#endif
+						layer_on(_SUPER_LOWER);
+					} else {
+						layer_off(_SUPER_LOWER);
+					}
+					return false;
+					break;
+				case MACRO_OPEN_CLOSE_CURLY:
+					if(record->event.pressed) { SEND_STRING("{}"); }
+					return false;
+					break;
+				case MACRO_OPEN_CLOSE_SQUARE:
+					if(record->event.pressed) { SEND_STRING("[]"); }
+					return false;
+					break;
+				case MACRO_DOUBLE_COLON:
+					if(record->event.pressed) { SEND_STRING("::"); }
+					return false;
+					break;
+				case MACRO_DOUBLE_AND:
+					if(record->event.pressed) { SEND_STRING("&&"); }
+					return false;
+					break;
+				case MACRO_DOUBLE_OR:
+					if(record->event.pressed) { SEND_STRING("||"); }
+					return false;
+					break;
+				case MACRO_SKINNY_ARROW:
+					if(record->event.pressed) { SEND_STRING("->"); }
+					return false;
+					break;
+				case MACRO_THICK_ARROW:
+					if(record->event.pressed) { SEND_STRING("=>"); }
+					return false;
+					break;
+				case MACRO_DOUBLE_UNEQUAL:
+					if(record->event.pressed) { SEND_STRING("!="); }
+					return false;
+					break;
+				case MACRO_DOUBLE_EQUAL:
+					if(record->event.pressed) { SEND_STRING("=="); }
+					return false;
+					break;
+				case MACRO_TRIPLE_UNEQUAL:
+					if(record->event.pressed) { SEND_STRING("!=="); }
+					return false;
+					break;
+				case MACRO_TRIPLE_EQUAL:
+					if(record->event.pressed) { SEND_STRING("==="); }
+					return false;
+					break;
+				case MACRO_OPENING_MULTILINE_COMMENT:
+					if(record->event.pressed) { SEND_STRING("/*"); }
+					return false;
+					break;
+				case MACRO_CLOSING_MULTILINE_COMMENT:
+					if(record->event.pressed) { SEND_STRING("*/"); }
+					return false;
+					break;
+				case MACRO_C_STYLE_COMMENT:
+					if(record->event.pressed) { SEND_STRING("//"); }
+					return false;
+					break;
+				case MACRO_LESS_OR_EQUAL:
+					if(record->event.pressed) { SEND_STRING("<="); }
+					return false;
+					break;
+				case MACRO_GREATER_OR_EQUAL:
+					if(record->event.pressed) { SEND_STRING(">="); }
+					return false;
+					break;
 			}
-		return true;
+	return true;
 };
